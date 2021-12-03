@@ -1,0 +1,66 @@
+---
+title: "day2"
+author: "Rachel Ganly"
+date: "12/2/2021"
+output: html_document
+---
+
+Set-up
+
+```{r}
+# Clear workspace
+rm(list = ls())
+
+# Load packages
+library(tidyverse)
+library(pillar)
+
+
+```
+
+Get data
+
+```{r}
+filepath<-paste0("/Users/rachelganly/OneDrive - HKUST Connect/HKUST/R Files/GitHub/AdventOfCode","/input/day2.txt")
+data<-read.csv(file = filepath,header = FALSE)
+```
+
+
+Part 1 
+
+```{r}
+glimpse(data)
+
+day2<-data%>%
+rename(Movement=V1)%>%
+  mutate(Movement=as.character(Movement))%>%
+  separate(col=Movement,into=c("Direction","Value"),sep=" ", remove=FALSE)%>%
+  mutate(x=ifelse(str_detect(string = Direction,pattern = "forward"),as.numeric(Value),0),
+         y=ifelse(str_detect(string = Direction,pattern = "down"),as.numeric(Value),
+ ifelse(str_detect(string = Direction,pattern = "up"),as.numeric(Value)*-1,0)))
+
+total<-day2%>%summarize(sum.x=sum(x),sum.y=sum(y))
+
+total[1]*total[2]
+  
+                   
+```
+
+
+Part 2
+
+```{r}
+day2<-day2%>%
+  mutate(aim=for (variable in vector) {
+    
+  }
+  
+    
+    
+    ThreeMeasure=Values+lag(Values,1)+lag(Values,2),
+         ThreeIncrease=ifelse(ThreeMeasure-lag(ThreeMeasure,1)>=1,"Increasing","No Change or Decreasing"))
+
+day1%>%count(ThreeIncrease)
+
+
+```

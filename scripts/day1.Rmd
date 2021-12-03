@@ -1,0 +1,61 @@
+---
+title: "day1"
+author: "Rachel Ganly"
+date: "12/2/2021"
+output: html_document
+---
+
+Set-up
+
+```{r}
+# Clear workspace
+rm(list = ls())
+
+# Load packages
+library(tidyverse)
+library(pillar)
+
+library(xml2)
+library(purrr)
+library(rvest)
+library(magick)
+
+```
+
+Get data
+
+```{r}
+filepath<-paste0(getwd(),"/input/day1.txt")
+data<-read.csv(file = filepath,header = FALSE)
+```
+
+
+Part 1 
+
+```{r}
+glimpse(data)
+day1<-data%>%
+rename(Values=V1)%>%
+  mutate(Increase=ifelse(is.na(lag(Values,1)),"NA",
+                         ifelse((Values-lag(Values,1))>=1,"Increasing","No Change or Decreasing")))
+
+day1%>%count(Increase)
+
+test<-
+  data%>%
+  mutate(dplyr::mutate(across(.fns=list(mean=mean, n_miss=~sum(is.na(.x))))))
+
+```
+
+
+Part 2
+
+```{r}
+day1<-day1%>%
+  mutate(ThreeMeasure=Values+lag(Values,1)+lag(Values,2),
+         ThreeIncrease=ifelse(ThreeMeasure-lag(ThreeMeasure,1)>=1,"Increasing","No Change or Decreasing"))
+
+day1%>%count(ThreeIncrease)
+
+
+```
