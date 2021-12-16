@@ -1,0 +1,256 @@
+---
+title: "day3"
+author: "Rachel Ganly"
+date: "12/2/2021"
+output: html_document
+---
+
+Problem 1: Binary Diagnostic 
+
+The submarine has been making some odd creaking noises, so you ask it to produce a diagnostic report just in case.The diagnostic report (your puzzle input) consists of a list of binary numbers which, when decoded properly, can tell you many useful things about the conditions of the submarine. The first parameter to check is the power consumption.
+
+You need to use the binary numbers in the diagnostic report to generate two new binary numbers (called the gamma rate and the epsilon rate). The power consumption can then be found by multiplying the gamma rate by the epsilon rate.
+
+Each bit in the gamma rate can be determined by finding the most common bit in the corresponding position of all numbers in the diagnostic report. For example, given the following diagnostic report:
+
+00100
+11110
+10110
+10111
+10101
+01111
+00111
+11100
+10000
+11001
+00010
+01010
+
+Considering only the first bit of each number, there are five 0 bits and seven 1 bits. Since the most common bit is 1, the first bit of the gamma rate is 1.
+
+The most common second bit of the numbers in the diagnostic report is 0, so the second bit of the gamma rate is 0.
+
+The most common value of the third, fourth, and fifth bits are 1, 1, and 0, respectively, and so the final three bits of the gamma rate are 110.
+
+So, the gamma rate is the binary number 10110, or 22 in decimal.
+
+The epsilon rate is calculated in a similar way; rather than use the most common bit, the least common bit from each position is used. So, the epsilon rate is 01001, or 9 in decimal. Multiplying the gamma rate (22) by the epsilon rate (9) produces the power consumption, 198.
+
+Use the binary numbers in your diagnostic report to calculate the gamma rate and epsilon rate, then multiply them together. What is the power consumption of the submarine? (Be sure to represent your answer in decimal, not binary.)
+
+Set-up
+
+```{r, include=FALSE}
+# Clear workspace
+rm(list = ls())
+
+# Load packages
+library(tidyverse)
+library(pillar)
+
+
+```
+
+Get data
+
+```{r}
+filepath<-paste0("/Users/rachelganly/OneDrive - HKUST Connect/HKUST/R Files/GitHub/AdventOfCode","/input/day3.txt")
+data<-read.csv(file = filepath,header = FALSE, colClasses = c("character")) #Read as characters
+```
+
+
+Part 1 - Clean Data and Find Answer
+
+```{r, echo=FALSE}
+glimpse(data)
+skimr::skim(data)
+
+# Split into separate rows
+c<-as.character(LETTERS[1:13])
+day3<-data%>%
+  separate(col=V1,into=c,sep="")%>%
+  mutate(across(.fns = as.numeric))
+
+totals<-day3%>%colSums()%>%
+  data.frame()%>%
+  rename("total"=".")%>%
+  mutate(gamma=ifelse(total>=500,1,0),
+         epsilon=ifelse(total<500,1,0))%>%
+  filter(!is.na(total))
+
+gamma<-as.vector(totals$gamma)
+
+gamma_rate<-c()
+for (number in 1:length(gamma)){
+  gamma_rate<-paste0(gamma_rate,gamma[number])
+}
+
+
+epsilon<-as.vector(totals$epsilon)
+epsilon_rate<-c()
+for (number in 1:length(epsilon)){
+  epsilon_rate<-paste0(epsilon_rate,epsilon[number])
+  
+}
+
+gamma_rate_final<-strtoi(gamma_rate, base=2)
+epsilon_rate_final<-strtoi(epsilon_rate, base=2)
+answer<-epsilon_rate_final*gamma_rate_final
+
+```
+
+
+# Part 2
+
+Next, you should verify the life support rating, which can be determined by multiplying the oxygen generator rating by the CO2 scrubber rating. Both the oxygen generator rating and the CO2 scrubber rating are values that can be found in your diagnostic report - finding them is the tricky part. Both values are located using a similar process that involves filtering out values until only one remains. Before searching for either rating value, 
+
+Start with the full list of binary numbers from your diagnostic report and consider just the first bit of those numbers. Then:
+Keep only numbers selected by the bit criteria for the type of rating value for which you are searching. 
+Discard numbers which do not match the bit criteria.
+If you only have one number left, stop; this is the rating value for which you are searching.
+Otherwise, repeat the process, considering the next bit to the right.
+
+The bit criteria depends on which type of rating value you want to find:
+1. To find oxygen generator rating, determine the most common value (0 or 1) in the current bit position, and keep only numbers with that bit in that position. If 0 and 1 are equally common, keep values with a 1 in the position being considered.
+2. To find CO2 scrubber rating, determine the least common value (0 or 1) in the current bit position, and keep only numbers with that bit in that position. If 0 and 1 are equally common, keep values with a 0 in the position being considered.
+
+For example, to determine the oxygen generator rating value using the same example diagnostic report from above:
+
+Start with all 12 numbers and consider only the first bit of each number. There are more 1 bits (7) than 0 bits (5), so keep only the 7 numbers with a 1 in the first position: 11110, 10110, 10111, 10101, 11100, 10000, and 11001.
+Then, consider the second bit of the 7 remaining numbers: there are more 0 bits (4) than 1 bits (3), so keep only the 4 numbers with a 0 in the second position: 10110, 10111, 10101, and 10000.
+In the third position, three of the four numbers have a 1, so keep those three: 10110, 10111, and 10101.
+In the fourth position, two of the three numbers have a 1, so keep those two: 10110 and 10111.
+In the fifth position, there are an equal number of 0 bits and 1 bits (one each). So, to find the oxygen generator rating, keep the number with a 1 in that position: 10111.
+As there is only one number left, stop; the oxygen generator rating is 10111, or 23 in decimal.
+
+Then, to determine the CO2 scrubber rating value from the same example above:
+Start again with all 12 numbers and consider only the first bit of each number. There are fewer 0 bits (5) than 1 bits (7), so keep only the 5 numbers with a 0 in the first position: 00100, 01111, 00111, 00010, and 01010.
+Then, consider the second bit of the 5 remaining numbers: there are fewer 1 bits (2) than 0 bits (3), so keep only the 2 numbers with a 1 in the second position: 01111 and 01010.
+In the third position, there are an equal number of 0 bits and 1 bits (one each). So, to find the CO2 scrubber rating, keep the number with a 0 in that position: 01010.
+As there is only one number left, stop; the CO2 scrubber rating is 01010, or 10 in decimal.
+Finally, to find the life support rating, multiply the oxygen generator rating (23) by the CO2 scrubber rating (10) to get 230.
+
+Use the binary numbers in your diagnostic report to calculate the oxygen generator rating and CO2 scrubber rating, then multiply them together. What is the life support rating of the submarine? (Be sure to represent your answer in decimal, not binary.)
+
+
+
+```{r}
+# Get Oxygen Generator number
+
+#binary<-day3%>%select(-A)%>%
+ # mutate(binary_number=paste0(B,C,D,E,F,G,H,I,J,K,L,M))
+#binary%>%filter(binary_number==gamma_rate)
+#binary%>%filter(binary_number==epsilon_rate)
+
+# write a for loop in which you get the col sums of the data.frame, if first col >=500, set 1 and then filter the column on 1. Then start again.
+
+oxygen<-day3%>%select(-A)
+
+for (col_number in 1:ncol(oxygen)){
+  rows<-nrow(oxygen)
+  column<-oxygen[col_number]
+  col_name<-colnames(oxygen)[col_number]
+  total<-column%>%colSums()%>%as.integer()
+  check<-ifelse(total==(rows/2),1,
+                ifelse(total>(rows/2),1,0))
+  oxygen<-oxygen%>%filter(.data[[col_name]]==check)
+  stopifnot(nrow(oxygen)>1)
+}
+
+oxy_final<-oxygen%>%as.character()
+
+oxy_generator<-c()
+
+for (number in 1:length(oxy_final)){
+  oxy_generator<-paste0(oxy_generator,oxy_final[number])
+}
+
+
+
+# Get C02 Generator number
+co2<-day3%>%select(-A)
+
+for (col_number in 1:ncol(co2)){
+  rows<-nrow(co2)
+  column<-co2[col_number]
+  col_name<-colnames(co2)[col_number]
+  total<-column%>%colSums()%>%as.integer()
+  check<-ifelse(total==(rows/2),0,
+                ifelse(total<(rows/2),1,0))
+  co2<-co2%>%filter(.data[[col_name]]==check)
+  stopifnot(nrow(co2)>1)
+}
+
+co2_final<-co2%>%as.character()
+
+co2_generator<-c()
+
+for (number in 1:length(co2_final)){
+  co2_generator<-paste0(co2_generator,co2_final[number])
+}
+
+
+
+oxy_digit<-oxygen_generator%>%as.factor()%>%strtoi(base = 2)
+co2_digit<-co2_generator%>%as.factor()%>%strtoi(base = 2)
+answer<-co2_digit*oxy_digit
+
+
+
+```
+
+
+```{r}
+
+# Attempt 2
+
+oxygen<-day3%>%select(-A)
+my_matrix<-oxygen
+
+for (col_number in 1:ncol(oxygen)){
+  rows<-nrow(oxygen)
+  column<-oxygen[col_number]
+  col_name<-colnames(oxygen)[col_number]
+  total<-column%>%colSums()%>%as.integer()
+  check<-ifelse(total==(rows/2),1,
+                ifelse(total>(rows/2),1,0))
+  my_matrix<-my_matrix%>%mutate(.data[[col_name]]=ifelse(.data[[col_name]]==check,.data[[col_name]],NA))
+  oxygen<-oxygen%>%filter(.data[[col_name]]==check)
+  stopifnot(nrow(oxygen)>1)
+}
+
+oxy_final<-oxygen%>%as.character()
+
+oxy_generator<-c()
+
+for (number in 1:length(oxy_final)){
+  oxy_generator<-paste0(oxy_generator,oxy_final[number])
+}
+
+
+
+# Get C02 Generator number
+co2<-day3%>%select(-A)
+
+for (col_number in 1:ncol(co2)){
+  rows<-nrow(co2)
+  column<-co2[col_number]
+  col_name<-colnames(co2)[col_number]
+  total<-column%>%colSums()%>%as.integer()
+  check<-ifelse(total==(rows/2),0,
+                ifelse(total<(rows/2),1,0))
+  co2<-co2%>%filter(.data[[col_name]]==check)
+  stopifnot(nrow(co2)>1)
+}
+
+co2_final<-co2%>%as.character()
+
+co2_generator<-c()
+
+for (number in 1:length(co2_final)){
+  co2_generator<-paste0(co2_generator,co2_final[number])
+}
+
+
+
+```

@@ -7,7 +7,7 @@ output: html_document
 
 Set-up
 
-```{r}
+```{r, include=FALSE}
 # Clear workspace
 rm(list = ls())
 
@@ -28,7 +28,7 @@ data<-read.csv(file = filepath,header = FALSE)
 
 Part 1 
 
-```{r}
+```{r, echo=FALSE}
 glimpse(data)
 
 day2<-data%>%
@@ -50,17 +50,40 @@ total[1]*total[2]
 Part 2
 
 ```{r}
-day2<-day2%>%
-  mutate(aim=for (variable in vector) {
-    
-  }
-  
-    
-    
-    ThreeMeasure=Values+lag(Values,1)+lag(Values,2),
-         ThreeIncrease=ifelse(ThreeMeasure-lag(ThreeMeasure,1)>=1,"Increasing","No Change or Decreasing"))
 
-day1%>%count(ThreeIncrease)
+  aim<-0
+  n<-nrow(day2)
+  aim_total<-c(1:n)
+  
+for (i in 1:n){
+  aim<-aim+day2$y[i]
+  aim_total[i]<-aim
+}
+  
+day2<-day2%>%bind_cols(day2,aim_total, .name_repair = "universal")%>%
+  select(Movement...1,Direction...2,Value...3,x...4,y...5,...11)%>%
+  rename(Movement=Movement...1,
+         Direction=Direction...2,
+         Value=Value...3,
+         x=x...4,
+         y=y...5,
+         aim=...11)
+
+  depth<-0
+  n<-nrow(day2)
+  depth_total<-c(1:n)
+  
+for (i in 1:n){
+  depth<-depth+(day2$aim[i]*day2$x[i])
+  depth_total[i]<-depth
+}
+  
+ day2<-day2%>%bind_cols(day2,depth_total, .name_repair = "universal")
+ 
+ 
+horizontal<-sum(day2$x...4) 
+answer<-horizontal*depth
+
 
 
 ```
